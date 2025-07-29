@@ -8,7 +8,8 @@ from models.servidor import Servidor
 
 class UI:
 
-    def menu():
+    @staticmethod
+    def menu(servidor):
         while True:
             print("\n--- Menu do Servidor ---")
             print("1. Listar clientes conectados")
@@ -18,41 +19,42 @@ class UI:
             escolha = input("Escolha uma opção: ")
 
             if escolha == '1':
-                if not Servidor.get_clientes():
+                if not servidor.get_clientes():
                     print("Nenhum cliente conectado.")
                 else:
                     print("\nClientes conectados:")
-                    for ip in Servidor.get_clientes().keys():
+                    for ip in servidor.get_clientes().keys():
                         print(f"- {ip}")
             elif escolha == '2':
                 ip_cliente = input("Digite o IP do cliente para detalhar: ")
-                if ip_cliente in Servidor.get_clientes():
-                    Servidor.imprimir_dados_cliente(ip_cliente, Servidor.get_clientes()[ip_cliente])
+                if ip_cliente in servidor.get_clientes():
+                    servidor.imprimir_dados_cliente(ip_cliente, servidor.get_clientes()[ip_cliente])
                 else:
                     print("Cliente não encontrado.")
             elif escolha == '3':
-                Servidor.calcular_medias()
+                servidor.calcular_medias()
             elif escolha == '4':
                 print("Encerrando o servidor...")
-                Servidor.parar()
+                UI.parar(servidor)
                 break
             else:
                 print("Opção inválida. Tente novamente.")
 
-    def iniciar():
+    @staticmethod
+    def iniciar(servidor):
         try:
-            Servidor.get_socket().bind((Servidor.get_host(), Servidor.get_port()))
-            Servidor.get_socket().listen()
-            print(f"Servidor iniciado em {Servidor.get_host()}:{Servidor.get_port()}")
+            servidor.get_socket().bind((servidor.get_host(), servidor.get_port()))
+            servidor.get_socket().listen()
+            print(f"Servidor iniciado em {servidor.get_host()}:{servidor.get_port()}")
             
-            menu_thread = threading.Thread(target=Servidor.menu())
+            menu_thread = threading.Thread(target=UI.menu(servidor), args=(servidor,))
             menu_thread.daemon = True
             menu_thread.start()
 
             while True:
-                conexao, endereco = Servidor.get_socket().accept()
+                conexao, endereco = servidor.get_socket().accept()
                 print(f"Conexão recebida de {endereco}")
-                thread = threading.Thread(target=Servidor.processar_cliente(), args=(conexao, endereco))
+                thread = threading.Thread(target=servidor.processar_cliente(), args=(conexao, endereco))
                 thread.daemon = True
                 thread.start()
         except KeyboardInterrupt:
@@ -60,14 +62,14 @@ class UI:
         except Exception as e:
             print(f"Erro no servidor: {e}")
         finally:
-            Servidor.get_socket().close()
+            servidor.get_socket().close()
 
-    def parar(self):
-        Servidor.get_socket().close()
+    def parar(servidor):
+        servidor.get_socket().close()
     
 if __name__ == "__main__":
     servidor_ip = '0.0.0.0' # Aceita conexões de qualquer IP
     porta_servidor = 65432
     
     servidor = Servidor(servidor_ip, porta_servidor)
-    servidor.iniciar()
+    UI.iniciar(servidor)

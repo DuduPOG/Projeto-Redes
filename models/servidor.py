@@ -51,7 +51,7 @@ class Servidor:
         return self.__clientes
     
     @staticmethod
-    def cifra_cesar(self, texto, deslocamento):
+    def cifra_cesar(texto, deslocamento):
         deslocamento = -deslocamento # Para descriptografar
         resultado = ""
         for char in texto:
@@ -84,7 +84,7 @@ class Servidor:
             print(f"Conexão com {endereco} fechada.")
 
     @staticmethod
-    def imprimir_dados_cliente(self, ip, dados):
+    def imprimir_dados_cliente(ip, dados):
         print("--- Detalhes do Cliente ---")
         print(f"IP: {ip}")
         print(f"Processadores: {dados.get('processadores')}")
@@ -98,7 +98,6 @@ class Servidor:
         print(f"Portas UDP abertas: {dados.get('portas_udp')}")
         print("----------------------------")
 
-    @staticmethod
     def calcular_medias(self):
         if not self.__clientes:
             print("\nNenhum cliente conectado para calcular a média.")

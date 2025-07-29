@@ -119,7 +119,7 @@ class Cliente:
             print(f"Ocorreu um erro: {e}")
         finally:
             self.__socket.close()
-
+"""
 if __name__ == "__main__":
     # O cliente precisa saber o IP do servidor.
     # Em uma rede local, você pode usar o IP do servidor.
@@ -129,3 +129,4 @@ if __name__ == "__main__":
     
     cliente = Cliente(servidor_ip, porta_servidor)
     cliente.enviar_dados()
+"""
