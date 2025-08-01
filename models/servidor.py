@@ -10,8 +10,10 @@ class Servidor:
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._clientes = {}
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # print_func será injetado pela UI para garantir a sincronização
-        self._print_func = print 
+        self._print_func = print
+        self._porta_comando = 65433 # Nova porta para comandos
+
+    # ... (os métodos _cifra_cesar permanecem os mesmos) ...
 
     def _cifra_cesar(self, texto, deslocamento):
         deslocamento = -deslocamento
@@ -25,7 +27,6 @@ class Servidor:
                 resultado += char
         return resultado
 
-    # Renomeando para 'seguro' para indicar que usa o print sincronizado
     def _processar_cliente_seguro(self, conexao, cliente_ip):
         try:
             dados_criptografados = conexao.recv(4096).decode('utf-8')
@@ -35,7 +36,7 @@ class Servidor:
             self._print_func(f"Dados recebidos do cliente {cliente_ip}:")
             
             self._clientes[cliente_ip] = dados
-            self._imprimir_dados_cliente_seguro(cliente_ip, dados) # Chamada para o método seguro
+            self._imprimir_dados_cliente_seguro(cliente_ip, dados)
 
         except json.JSONDecodeError:
             self._print_func(f"Erro ao decodificar dados JSON do cliente {cliente_ip}.")
@@ -45,7 +46,7 @@ class Servidor:
             conexao.close()
             self._print_func(f"Conexão com {cliente_ip} fechada.")
 
-    # Renomeando para 'seguro'
+    # ... (os métodos _imprimir_dados_cliente_seguro e _calcular_medias_seguro permanecem os mesmos) ...
     def _imprimir_dados_cliente_seguro(self, ip, dados):
         self._print_func("--- Detalhes do Cliente ---")
         self._print_func(f"IP: {ip}")
@@ -60,7 +61,6 @@ class Servidor:
         self._print_func(f"Portas UDP abertas: {dados.get('portas_udp')}")
         self._print_func("----------------------------")
 
-    # Renomeando para 'seguro'
     def _calcular_medias_seguro(self):
         if not self._clientes:
             self._print_func("\nNenhum cliente conectado para calcular a média.")
@@ -86,12 +86,31 @@ class Servidor:
         self._print_func(f"Média de RAM Livre: {media_ram_livre:.2f} GB")
         self._print_func(f"Média de Espaço em Disco Livre: {media_disco_livre:.2f} GB")
         self._print_func("------------------------------------")
+
+    def _enviar_comando(self, cliente_ip, comando):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect((cliente_ip, self._porta_comando))
+            comando_criptografado = self._cifra_cesar(comando, self._shift)
+            s.sendall(comando_criptografado.encode('utf-8'))
+            
+            resposta_criptografada = s.recv(1024).decode('utf-8')
+            resposta = self._cifra_cesar(resposta_criptografada, -self._shift)
+            self._print_func(f"Resposta do cliente {cliente_ip}: {resposta}")
+        except ConnectionRefusedError:
+            self._print_func(f"Erro: O cliente {cliente_ip} não está ouvindo comandos na porta {self._porta_comando}.")
+        except Exception as e:
+            self._print_func(f"Erro ao enviar comando para {cliente_ip}: {e}")
+        finally:
+            s.close()
     
-    # Adicionando um setter para a função de impressão
+    def enviar_comando_desligar(self, cliente_ip):
+        self._enviar_comando(cliente_ip, "SHUTDOWN")
+
+    # ... (getters e parar permanecem os mesmos) ...
     def set_print_func(self, func):
         self._print_func = func
 
-    # Getters permanecem os mesmos
     def get_socket(self):
         return self._socket
 
